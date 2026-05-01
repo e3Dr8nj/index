@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>TaskFlow</title>
+  
+  <!-- PWA Meta (обязательно для установки) -->
+  <meta name="theme-color" content="#0a0a1a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="TaskFlow">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="manifest" href="./manifest.json">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@5.0.0/index.min.css" rel="stylesheet">
+  
+  <!-- Service Worker Registration -->
+  <script>
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.register('./sw.js').catch(function(err){console.warn('SW:',err)});
+    }
+  </script>
+  
+  <style>
+    :root{--bg:#0a0a1a;--glass:rgba(0,255,255,.03);--glass-border:rgba(0,255,255,.1);--glass-hover:rgba(0,255,255,.07);--text:#e0e0e0;--text2:rgba(0,255,255,.6);--text3:rgba(255,0,255,.5);--accent:#00ffff;--accent2:#ff00ff;--accent3:#ffff00;--input-bg:rgba(0,255,255,.04);--input-border:rgba(0,255,255,.12);--btn-bg:linear-gradient(135deg,#00ffff,#ff00ff);--ring-bg:rgba(0,255,255,.06)}
+    [data-theme="light"]{--bg:#f0f2f5;--glass:rgba(255,255,255,.7);--glass-border:rgba(0,0,0,.08);--text:#1a1a2e;--text2:rgba(99,102,241,.7);--text3:rgba(139,92,246,.5);--accent:#6366f1;--accent2:#8b5cf6;--btn-bg:linear-gradient(135deg,#6366f1,#8b5cf6);--ring-bg:rgba(0,0,0,.05)}
+    *{font-family:'Inter',sans-serif;box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html{height:-webkit-fill-available}
+    body{background:var(--bg);min-height:100vh;min-height:100dvh;color:var(--text);overflow-x:hidden}
+    body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,var(--glass) 2px,var(--glass) 4px);pointer-events:none;opacity:.3;z-index:0}
+    [data-theme="light"] body::before{opacity:0}
+    .glass{background:var(--glass);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--glass-border)}
+    .glass-sm{background:var(--glass);border:1px solid var(--glass-border);transition:all .25s}
+    .glass-sm:hover{background:var(--glass-hover);border-color:var(--accent)}
+    .input-g{background:rgba(255,255,255,.04);border:1px solid var(--glass-border);border-radius:12px;color:var(--text);padding:12px 16px;width:100%}
+    .input-g:focus{border-color:var(--accent);outline:none}
+    .tab-btn{flex:1;padding:10px 4px;font-size:.75rem;font-weight:600;color:var(--text3);cursor:pointer;transition:all .3s;border-radius:12px}
+    .tab-btn.active{background:linear-gradient(135deg,rgba(0,255,255,.15),rgba(255,0,255,.1));color:var(--accent);border:1px solid var(--accent)}
+    .panel{display:none;padding:1rem}.panel.active{display:block;animation:fadeIn .35s}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    .cb{appearance:none;width:22px;height:22px;border:2px solid var(--glass-border);border-radius:6px;cursor:pointer;position:relative}
+    .cb:checked{background:var(--btn-bg);border-color:transparent}
+    .cb:checked::after{content:'✓';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-size:13px;font-weight:700}
+    .completed-line{text-decoration:line-through;opacity:.45}
+    .desc-hidden{max-height:0;opacity:0;overflow:hidden;transition:all .3s}
+    .desc-exp{max-height:150px;opacity:1;margin-top:6px;transition:all .3s}
+    .btn-main{background:var(--btn-bg);color:#fff;padding:12px 16px;border-radius:12px;font-weight:600;transition:all .3s;border:none;cursor:pointer;width:100%}
+    .btn-main:active{transform:scale(.98)}
+    .rec-btn{font-size:.7rem;border:1px solid var(--glass-border);border-radius:8px;padding:6px;color:var(--text3);cursor:pointer}
+    .rec-btn.active{background:rgba(0,255,255,.12);border-color:var(--accent);color:var(--accent)}
+    .day-btn{font-size:.7rem;border:1px solid var(--glass-border);border-radius:8px;padding:8px 4px;color:var(--text3);cursor:pointer}
+    .day-btn.active{background:linear-gradient(135deg,rgba(0,255,255,.2),rgba(255,0,255,.15));border-color:var(--accent2);color:var(--accent2)}
+    .timer-ring{transition:stroke-dashoffset 1s linear}
+    .metro-ring{transition:stroke-dashoffset .1s linear}
+    @keyframes metroPulse{0%,100%{stroke-width:3;opacity:1}50%{stroke-width:6;opacity:.6}}
+    .metro-pulse{animation:metroPulse .3s ease}
+    .timer-digit{font-variant-numeric:tabular-nums;letter-spacing:.05em}
+    .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(16,185,129,.9);color:#fff;padding:12px 20px;border-radius:12px;font-size:.875rem;z-index:100;animation:fadeIn .3s}
+    .toast.err{background:rgba(239,68,68,.9)}
+    .theme-toggle{cursor:pointer;border-radius:8px;padding:6px;display:flex;align-items:center}
+    .metro-toggle{cursor:pointer;border:1px solid var(--glass-border);border-radius:8px;padding:4px 10px;font-size:.75rem;font-weight:600;color:var(--text3)}
+    .metro-toggle.active{background:rgba(255,255,0,.15);border-color:#ffff00;color:#ffff00}
+    .glow-text{text-shadow:0 0 15px var(--accent)}
+  </style>
+</head>
+<body class="flex flex-col items-center min-h-screen pb-24">
+
+<header class="w-full max-w-3xl mb-6 text-center px-4 pt-4">
+  <div class="flex items-center justify-center gap-3 mb-2">
+    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-fuchsia-500 flex items-center justify-center">
+      <svg width="20" height="20" viewBox="0 0 18 18" fill="none"><path d="M3 9L7 13L15 5" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg>
+    </div>
+    <h1 class="text-3xl font-bold glow-text">TaskFlow</h1>
+    <button onclick="toggleTheme()" class="theme-toggle ml-auto">
+      <svg id="themeIcon" width="20" height="20" viewBox="0 0 18 18" fill="none"></svg>
+    </button>
+  </div>
+  <p id="dateDisplay" style="color:var(--text3);font-size:.8rem"></p>
+</header>
+
+<nav class="w-full max-w-3xl mb-6 px-4 sticky top-0 z-40" style="background:var(--bg)">
+  <div class="glass rounded-2xl p-1.5 flex gap-1">
+    <button onclick="switchPanel('today')" id="btn-today" class="tab-btn active">📅 День</button>
+    <button onclick="switchPanel('list')" id="btn-list" class="tab-btn">📋 Список</button>
+    <button onclick="switchPanel('builder')" id="btn-builder" class="tab-btn">➕ Создать</button>
+    <button onclick="switchPanel('timer')" id="btn-timer" class="tab-btn">⏱ Таймер</button>
+  </div>
+</nav>
+
+<main class="w-full max-w-3xl px-4 pb-8">
+  <div id="panel-today" class="panel active glass rounded-2xl">
+    <div class="flex justify-between mb-4"><h2 class="text-lg font-bold">Дела</h2><span id="todayBadge" class="text-xs px-2 py-1 rounded" style="background:rgba(0,255,136,.1);color:#00ff88"></span></div>
+    <div class="glass-sm rounded-xl p-4 mb-4">
+      <div class="flex justify-between text-xs mb-2"><span style="color:var(--text3)">Прогресс</span><span id="todayPct" class="font-bold">0%</span></div>
+      <div class="w-full h-2 rounded-full overflow-hidden" style="background:var(--ring-bg)"><div id="todayBar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:var(--btn-bg)"></div></div>
+    </div>
+    <div id="todayList" class="space-y-3 max-h-[50vh] overflow-y-auto"></div>
+    <div id="todayEmpty" class="hidden text-center py-12"><p style="color:var(--text3)">Нет дел</p></div>
+  </div>
+
+  <div id="panel-list" class="panel glass rounded-2xl">
+    <div class="flex justify-between mb-4"><h2 class="text-lg font-bold">Все дела</h2><span id="listCount" class="text-xs px-2 py-1 rounded" style="background:rgba(255,0,255,.1);color:var(--accent2)">0</span></div>
+    <input type="text" id="searchList" placeholder="Поиск..." oninput="renderList()" class="input-g mb-4">
+    <div id="listWrap" class="space-y-3 max-h-[50vh] overflow-y-auto"></div>
+  </div>
+
+  <div id="panel-builder" class="panel glass rounded-2xl">
+    <h2 class="text-lg font-bold mb-4">Создать дело</h2>
+    <div class="space-y-4">
+      <input type="text" id="bTitle" placeholder="Название *" class="input-g">
+      <textarea id="bDesc" placeholder="Описание" rows="3" class="input-g"></textarea>
+      <select id="bCat" class="input-g">
+        <option value="general">📌 Общее</option><option value="work">💼 Работа</option><option value="personal">👤 Личное</option><option value="health">🏃 Здоровье</option><option value="study">📚 Учёба</option><option value="shopping">🛒 Покупки</option>
+      </select>
+      <div class="glass-sm rounded-xl p-4"><label style="color:var(--text3)" class="text-xs">⏱ Время (мин)</label><input type="number" id="bDurationMin" min="1" max="999" placeholder="0" class="input-g mt-2"></div>
+      <div class="glass-sm rounded-xl p-4"><label style="color:var(--text3)" class="text-xs">🔔 Метроном (сек)</label><input type="number" id="bMetroPeriod" min="1" max="120" placeholder="0" class="input-g mt-2"></div>
+      <button onclick="buildTask()" class="btn-main">✦ Создать</button>
+    </div>
+  </div>
+
+  <div id="panel-timer" class="panel glass rounded-2xl">
+    <h2 class="text-lg font-bold mb-6">Таймер</h2>
+    <div class="flex flex-col items-center mb-6">
+      <div class="relative w-60 h-60">
+        <svg class="w-full h-full -rotate-90" viewBox="0 0 220 220">
+          <circle cx="110" cy="110" r="100" fill="none" stroke="var(--ring-bg)" stroke-width="3"/>
+          <circle id="metroRing" cx="110" cy="110" r="100" fill="none" stroke="#ffff00" stroke-width="3" class="metro-ring" opacity="0" stroke-dasharray="628" stroke-dashoffset="628"/>
+          <circle cx="110" cy="110" r="88" fill="none" stroke="var(--ring-bg)" stroke-width="6"/>
+          <circle id="timerRing" cx="110" cy="110" r="88" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round" class="timer-ring" stroke-dasharray="553" stroke-dashoffset="0"/>
+          <defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00ffff"/><stop offset="100%" stop-color="#ff00ff"/></linearGradient></defs>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <div id="timerDisplay" class="timer-digit text-5xl font-bold" style="color:var(--text)">01:00:00</div>
+          <div id="timerStatus" class="text-xs mt-3 uppercase" style="color:var(--text3)">Готов</div>
+        </div>
+      </div>
+    </div>
+    <div id="metroSettings" class="hidden glass-sm rounded-xl p-4 mb-6">
+      <div class="flex items-center justify-between"><span style="color:#ffff00">🔔 Метроном</span><button onclick="toggleMetro()" id="metroToggleBtn" class="metro-toggle">Выкл</button></div>
+    </div>
+    <div class="flex gap-3 justify-center flex-wrap mb-8">
+      <button id="btnStart" onclick="timerStart()" class="btn-timer-start py-3 px-8 rounded-xl font-bold">Старт</button>
+      <button id="btnPause" onclick="timerPause()" class="btn-timer-pause py-3 px-8 rounded-xl font-bold hidden">Пауза</button>
+      <button id="btnReset" onclick="timerReset()" class="btn-timer-reset py-3 px-6 rounded-xl font-medium">↺</button>
+      <button id="btnDone" onclick="timerDone()" class="btn-timer-done py-3 px-6 rounded-xl font-bold hidden">✓</button>
+    </div>
+  </div>
+</main>
+
+<div id="toastBox"></div>
+
+<script>
+// ===== THEME =====
+var currentTheme='cyberpunk';
+function toggleTheme(){currentTheme=currentTheme==='cyberpunk'?'light':'cyberpunk';applyTheme();store.save()}
+function applyTheme(){document.documentElement.setAttribute('data-theme',currentTheme==='light'?'light':'');updateThemeIcon()}
+function updateThemeIcon(){var i=document.getElementById('themeIcon');i.innerHTML=currentTheme==='light'?'<path d="M15.09 9.37A6 6 0 118.63 2.91 4.5 4.5 0 0015.09 9.37z" stroke="var(--text2)" stroke-width="1.5"/>':'<circle cx="9" cy="9" r="4" stroke="var(--text2)" stroke-width="1.5"/><path d="M9 1V3M9 15V17M1 9H3M15 9H17" stroke="var(--text2)" stroke-width="1.5" stroke-linecap="round"/>'}
+applyTheme();
+
+// ===== STORAGE =====
+var store={data:{tasks:[],completed:{},theme:'cyberpunk'},lsOk:false,
+  init(){try{localStorage.setItem('__t','1');localStorage.removeItem('__t');this.lsOk=true}catch(e){}
+    if(this.lsOk){try{var t=localStorage.getItem('tf');if(t)this.data=JSON.parse(t);var d=localStorage.getItem('tf_done');if(d)this.data.completed=JSON.parse(d)}catch(e){}}
+    if(this.data.theme){currentTheme=this.data.theme;applyTheme()}},
+  save(){this.data.theme=currentTheme;if(this.lsOk){try{localStorage.setItem('tf',JSON.stringify(this.data));localStorage.setItem('tf_done',JSON.stringify(this.data.completed))}catch(e){}}}
+};store.init();
+
+// ===== UTILS =====
+function todayStr(){var d=new Date();return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())}
+function p2(n){return String(n).padStart(2,'0')}
+function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function durLabel(ms){if(!ms)return'';var m=Math.round(ms/60000);return m<60?m+' мин':Math.floor(m/60)+' ч '+(m%60)+' мин'}
+function fmtTime(ms){var s=Math.ceil(Math.max(0,ms)/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),sec=s%60;return p2(h)+':'+p2(m)+':'+p2(sec)}
+function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML}
+function showToast(msg,type){var t=document.createElement('div');t.className='toast'+(type==='err'?' err':'');t.textContent=msg;document.getElementById('toastBox').appendChild(t);setTimeout(()=>t.remove(),3000)}
+
+// ===== PANELS =====
+function switchPanel(name){document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('btn-'+name).classList.add('active');document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));document.getElementById('panel-'+name).classList.add('active');if(name==='today')renderToday();if(name==='list')renderList();if(name==='timer')initTimerPanel()}
+
+// ===== TASKS =====
+var CAT={general:{icon:'📌',label:'Общее',color:'#94a3b8'},work:{icon:'💼',label:'Работа',color:'#00ffff'},personal:{icon:'👤',label:'Личное',color:'#ff00ff'},health:{icon:'🏃',label:'Здоровье',color:'#00ff88'},study:{icon:'📚',label:'Учёба',color:'#ffff00'},shopping:{icon:'🛒',label:'Покупки',color:'#ff4466'}};
+var DAY_N=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+var bRec={type:'none',days:[],interval:7};
+var linkedTaskId=null, metroEnabled=false, metroPeriodSec=5, metroLastTick=0, metroIntervalId=null, metroRingCirc=2*Math.PI*100;
+var audioCtx=null;
+
+function toggleMetro(){metroEnabled=!metroEnabled;var btn=document.getElementById('metroToggleBtn');if(metroEnabled){btn.classList.add('active');btn.textContent='Вкл';startMetroAnim()}else{btn.classList.remove('active');btn.textContent='Выкл';stopMetro()}}
+function playMetroTick(){try{var c=getACtx(),n=c.currentTime,o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.setValueAtTime(1000,n);g.gain.setValueAtTime(0.2,n);g.gain.exponentialRampToValueAtTime(0.001,n+0.05);o.connect(g);g.connect(c.destination);o.start(n);o.stop(n+0.05)}catch(e){}}
+function startMetroAnim(){if(!metroEnabled||timerSt.state!=='running')return;metroLastTick=Date.now();document.getElementById('metroSettings').classList.remove('hidden');if(metroIntervalId)clearInterval(metroIntervalId);metroIntervalId=setInterval(checkMetroTick,250)}
+function stopMetro(){if(metroIntervalId){clearInterval(metroIntervalId);metroIntervalId=null}var mr=document.getElementById('metroRing');if(mr){mr.style.opacity='0';mr.style.strokeDashoffset=metroRingCirc}}
+function checkMetroTick(){if(!metroEnabled||timerSt.state!=='running')return;var now=Date.now(),elapsed=(now-metroLastTick)/1000,period=Math.max(1,metroPeriodSec);if(elapsed>=period){metroLastTick=now;playMetroTick();var mr=document.getElementById('metroRing');if(mr){mr.classList.add('metro-pulse');setTimeout(()=>mr.classList.remove('metro-pulse'),200)}}var progress=Math.min(elapsed/period,1),mr=document.getElementById('metroRing');if(mr){mr.style.opacity=metroEnabled?'1':'0';mr.style.strokeDashoffset=metroRingCirc*(1-progress)}}
+
+function getTodayTasks(){var today=new Date(),ts=todayStr(),dow=today.getDay(),r=[];store.data.tasks.forEach(t=>{var rec=t.recurrence;if(!rec||rec.type==='none')return;var cd=new Date(t.createdAt.split('T')[0]),dd=Math.floor((today-cd)/864e5);if(dd<0)return;var show=rec.type==='daily'||(rec.type==='weekly'&&rec.days&&rec.days.includes(dow))||(rec.type==='interval'&&dd%(rec.interval||1)===0);if(show)r.push({...t,completed:!!store.data.completed[t.id]})});return r}
+function renderToday(){var tasks=getTodayTasks(),total=tasks.length,done=tasks.filter(t=>t.completed).length,pct=total?Math.round(done/total*100):0;document.getElementById('todayBar').style.width=pct+'%';document.getElementById('todayPct').textContent=pct+'%';document.getElementById('todayBadge').textContent=new Date().toLocaleDateString('ru-RU',{day:'numeric',month:'short'});var list=document.getElementById('todayList'),empty=document.getElementById('todayEmpty');if(!tasks.length){list.innerHTML='';empty.classList.remove('hidden');return}empty.classList.add('hidden');list.innerHTML=tasks.map(t=>{var c=CAT[t.category]||CAT.general;return `<div class="glass-sm rounded-xl p-3 flex items-start gap-3" style="border-left:3px solid ${c.color}"><input type="checkbox" class="cb" ${t.completed?'checked':''} onchange="toggleDone('${t.id}')"><div class="flex-1"><div class="font-medium text-sm" style="color:var(--text)">${esc(t.title)}</div>${t.durationMs?`<span class="text-xs" style="color:${c.color}">⏱ ${durLabel(t.durationMs)}</span>`:''}${t.metroPeriod?`<span class="text-xs" style="color:#ffff00">♪ ${t.metroPeriod}с</span>`:''}</div></div>`}).join('')}
+function toggleDone(id){var ts=todayStr();if(store.data.completed[id]===ts)delete store.data.completed[id];else store.data.completed[id]=ts;store.save();renderToday()}
+
+function renderList(){var q=(document.getElementById('searchList')?.value||'').toLowerCase(),f=store.data.tasks.filter(t=>t.title.toLowerCase().includes(q)||(t.description||'').toLowerCase().includes(q));document.getElementById('listCount').textContent=store.data.tasks.length;document.getElementById('listWrap').innerHTML=f.map(t=>{var c=CAT[t.category]||CAT.general;return `<div class="glass-sm rounded-xl p-3 flex items-start gap-3" style="border-left:3px solid ${c.color}"><div class="flex-1"><div class="font-medium text-sm" style="color:var(--text)">${esc(t.title)}</div><div class="text-xs" style="color:var(--text3)">${c.icon} ${c.label}</div></div><button onclick="deleteTask('${t.id}')" class="w-7 h-7 rounded-lg flex items-center justify-center" style="background:var(--glass)">✕</button></div>`}).join('')||'<p style="color:var(--text3)">Нет дел</p>'}
+function deleteTask(id){store.data.tasks=store.data.tasks.filter(t=>t.id!==id);delete store.data.completed[id];store.save();renderList();showToast('Удалено','ok')}
+
+function buildTask(){var title=document.getElementById('bTitle').value.trim();if(!title){showToast('Введите название','err');return}var dm=parseInt(document.getElementById('bDurationMin').value)||0,mp=parseInt(document.getElementById('bMetroPeriod').value)||0,ck=document.getElementById('bCat').value;var task={id:genId(),title:title,description:document.getElementById('bDesc').value.trim(),category:ck,createdAt:new Date().toISOString(),durationMs:dm>0?dm*60000:0,metroPeriod:mp>0?mp:0,recurrence:{type:'daily'}};store.data.tasks.unshift(task);store.save();showToast('Создано!','ok');document.getElementById('bTitle').value='';document.getElementById('bDesc').value='';document.getElementById('bDurationMin').value='';document.getElementById('bMetroPeriod').value='';renderToday()}
+
+function getACtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}
+
+// ===== TIMER =====
+var CIRC=2*Math.PI*88,timerSt={state:'idle',totalMs:3600000,remainingMs:3600000,targetTime:null},timerInt=null;
+function loadTimer(){try{var s=localStorage.getItem('tf_timer');if(s){var d=JSON.parse(s);if(d.date===todayStr()){timerSt.totalMs=d.totalMs||3600000;timerSt.state=d.state||'idle';timerSt.remainingMs=d.remainingMs||timerSt.totalMs;timerSt.targetTime=d.targetTime||null;if(timerSt.state==='running'&&timerSt.targetTime){var now=Date.now();if(now>=timerSt.targetTime){timerSt.state='done';timerSt.remainingMs=0;timerSt.targetTime=null}else{timerSt.remainingMs=timerSt.targetTime-now}}else if(timerSt.state==='running'){timerSt.state='paused'}}}}catch(e){}}
+function saveTimer(){try{localStorage.setItem('tf_timer',JSON.stringify({date:todayStr(),totalMs:timerSt.totalMs,remainingMs:timerSt.remainingMs,state:timerSt.state,targetTime:timerSt.targetTime}))}catch(e){}}
+function updTimerDisp(){var d=document.getElementById('timerDisplay'),st=document.getElementById('timerStatus'),r=document.getElementById('timerRing');d.textContent=fmtTime(timerSt.remainingMs);var prog=timerSt.totalMs>0?timerSt.remainingMs/timerSt.totalMs:1;r.style.strokeDashoffset=CIRC*(1-prog);var bs=document.getElementById('btnStart'),bp=document.getElementById('btnPause'),br=document.getElementById('btnReset'),bd=document.getElementById('btnDone');switch(timerSt.state){case 'idle':st.textContent='Готов';st.style.color='var(--text3)';bs.classList.remove('hidden');bp.classList.add('hidden');bd.classList.add('hidden');br.classList.remove('hidden');r.style.stroke='url(#g)';break;case 'running':st.textContent='Работает';st.style.color='#00ff88';bs.classList.add('hidden');bp.classList.remove('hidden');bd.classList.remove('hidden');br.classList.remove('hidden');r.style.stroke='url(#g)';break;case 'paused':st.textContent='Пауза';st.style.color='#f59e0b';bs.classList.remove('hidden');bp.classList.add('hidden');bd.classList.remove('hidden');br.classList.remove('hidden');r.style.stroke='#f59e0b';break;case 'done':st.textContent='⏰ Время!';st.style.color='#ef4444';bs.classList.remove('hidden');bp.classList.add('hidden');bd.classList.add('hidden');br.classList.remove('hidden');r.style.stroke='#ef4444';r.style.strokeDashoffset=CIRC;break}}
+function timerTick(){if(timerSt.state!=='running')return;var now=Date.now();timerSt.remainingMs=timerSt.targetTime-now;if(timerSt.remainingMs<=0){timerSt.remainingMs=0;timerSt.state='done';timerSt.targetTime=null;clearInterval(timerInt);timerInt=null;saveTimer();updTimerDisp();addHist(timerSt.totalMs);showToast('⏰ Завершён!','err');stopMetro();if(linkedTaskId){store.data.completed[linkedTaskId]=todayStr();store.save();renderToday()}return}updTimerDisp()}
+function timerStart(){if(timerSt.state==='done'){timerReset();return}if(!linkedTaskId&&timerSt.state==='idle'){var h=parseInt(document.getElementById('customMin')?.value)||0,m=parseInt(document.getElementById('customSec')?.value)||0,t=h*3600+m*60;if(t>0){timerSt.totalMs=t*1000;timerSt.remainingMs=t*1000}}if(timerSt.state==='idle'){timerSt.remainingMs=timerSt.totalMs}timerSt.targetTime=Date.now()+timerSt.remainingMs;timerSt.state='running';saveTimer();updTimerDisp();if(timerInt)clearInterval(timerInt);timerInt=setInterval(timerTick,250);startMetroAnim()}
+function timerPause(){if(timerSt.state!=='running')return;timerSt.remainingMs=Math.max(0,timerSt.targetTime-Date.now());timerSt.targetTime=null;timerSt.state='paused';saveTimer();if(timerInt){clearInterval(timerInt);timerInt=null}stopMetro();updTimerDisp()}
+function timerReset(){timerSt.state='idle';timerSt.remainingMs=timerSt.totalMs;timerSt.targetTime=null;saveTimer();if(timerInt){clearInterval(timerInt);timerInt=null}stopMetro();updTimerDisp()}
+function timerDone(){timerSt.remainingMs=0;timerSt.state='done';timerSt.targetTime=null;saveTimer();if(timerInt){clearInterval(timerInt);timerInt=null}stopMetro();addHist(timerSt.totalMs);updTimerDisp();showToast('✅ Готово','ok');if(linkedTaskId){store.data.completed[linkedTaskId]=todayStr();store.save();renderToday()}}
+function addHist(ms){try{var h=JSON.parse(localStorage.getItem('tf_thist')||'[]');h.push({date:todayStr(),duration:ms,time:new Date().toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit'})});localStorage.setItem('tf_thist',JSON.stringify(h))}catch(e){}renderHist()}
+function renderHist(){var h=[],c=document.getElementById('timerHistory');try{h=JSON.parse(localStorage.getItem('tf_thist')||'[]').filter(i=>i.date===todayStr())}catch(e){}document.getElementById('timerTodayCount').textContent=h.length;if(!h.length){c.innerHTML='<p style="color:var(--glass-border)">Нет записей</p>';return}c.innerHTML=h.slice(-3).reverse().map(item=>`<div class="glass-sm rounded-lg py-1 px-3 flex justify-between text-xs"><span style="color:var(--text3)">⏱ ${Math.round(item.duration/60000)} мин</span><span style="color:var(--glass-border)">${item.time}</span></div>`).join('')}
+function initTimerPanel(){loadTimer();updTimerDisp();renderHist();if(timerSt.state==='running'){if(timerInt)clearInterval(timerInt);timerInt=setInterval(timerTick,250);startMetroAnim()}}
+function openTaskTimer(taskId){var task=store.data.tasks.find(t=>t.id===taskId);if(!task||!task.durationMs)return;linkedTaskId=taskId;switchPanel('timer');timerSt.totalMs=task.durationMs;timerSt.remainingMs=task.durationMs;timerSt.state='idle';timerSt.targetTime=null;stopMetro();saveTimer();updTimerDisp();if(timerInt)clearInterval(timerInt);timerSt.targetTime=Date.now()+timerSt.remainingMs;timerSt.state='running';saveTimer();updTimerDisp();timerInt=setInterval(timerTick,250);startMetroAnim()}
+function unlinkTask(){if(timerInt){clearInterval(timerInt);timerInt=null}stopMetro();linkedTaskId=null;timerSt.state='idle';timerSt.totalMs=3600000;timerSt.remainingMs=3600000;timerSt.targetTime=null;saveTimer();updTimerDisp()}
+
+// ===== LIFECYCLE =====
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&timerSt.state==='running'){var now=Date.now();timerSt.remainingMs=timerSt.targetTime-now;saveTimer();updTimerDisp();if(timerSt.remainingMs<=0){timerRemaining0Logic()}}});
+window.addEventListener('pagehide',function(){store.save();saveTimer()});
+function timerRemaining0Logic(){timerSt.remainingMs=0;timerSt.state='done';timerSt.targetTime=null;clearInterval(timerInt);timerInt=null;saveTimer();updTimerDisp();addHist(timerSt.totalMs);showToast('⏰ Завершён!','err');stopMetro();if(linkedTaskId){store.data.completed[linkedTaskId]=todayStr();store.save();renderToday()}}
+
+// ===== INIT =====
+function init(){showDate();renderToday();updTimerDisp();renderHist()}
+function showDate(){var n=new Date(),s=n.toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});document.getElementById('dateDisplay').textContent=s.charAt(0).toUpperCase()+s.slice(1)}
+init();
+</script>
+</body>
+</html>
