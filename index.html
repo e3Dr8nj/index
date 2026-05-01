@@ -239,7 +239,7 @@
                 folderGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><h3>📂 Папка modules/ пуста</h3></div>`;
             } else {
                 const modules = await Promise.all(folderNames.map(async (name) => {
-                    const folderPath = `modules/${name}/`;
+                    const folderPath = `./modules/${name}/`;
                     let iconUrl = null;
                     let description = null;
 
