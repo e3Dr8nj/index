@@ -128,7 +128,7 @@
         <div class="header-inner">
             <div class="logo" onclick="goHome()">
                 <img src="Group 35.png" alt="logo" style="height:28px;width:28px;">
-                Shell App2
+                Shell App
             </div>
             <button class="btn-back" id="btnBackToMenu" onclick="goHome()">← Назад к списку</button>
         </div>
@@ -189,6 +189,20 @@
 
         // ✅ ЕДИНАЯ ФУНКЦИЯ INIT - загрузка из modules.json
         async function init() {
+
+            // В начале init() или после загрузки:
+const urlParams = new URLSearchParams(window.location.search);
+const moduleParam = urlParams.get('module');
+if (moduleParam) {
+  // Ищем модуль по имени и загружаем его сразу
+  const mod = window.KNOWN_MODULES?.find(m => m.name === moduleParam);
+  if (mod) {
+    loadModule(mod.url);
+    // Опционально: скрываем меню, показываем только модуль
+  }
+}
+
+
             loadingMsg.style.display = 'block';
             loadingMsg.innerHTML = `<div class="loader"></div><p>Загрузка модулей...</p>`;
             folderGrid.style.display = 'none';

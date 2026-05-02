@@ -320,7 +320,7 @@ function updateThemeIcon(theme){var icon=document.getElementById('themeIcon');if
 
 // ===== LOCALSTORAGE =====
 var store = {
-    {tasks:[],completed:{},theme:'cyberpunk'},
+    data:{tasks:[],completed:{},theme:'cyberpunk'},
     lsOk: false,
     init(){
         try { localStorage.setItem('__tf_test', '1'); localStorage.removeItem('__tf_test'); this.lsOk = true; } catch(e) {}
@@ -493,4 +493,6 @@ init();
 </script>
 </body>
 </html>
+
+
 
