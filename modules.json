@@ -13,10 +13,10 @@
       "description": "modules/SentenceCraft/describe.md"
     },
     {
-      "name": "test",
-      "url": "modules/test/index.html",
-      "icon": null,
-      "description": null
+      "name": "taskFlow",
+      "url": "modules/taskFlow/index.html",
+      "icon": "modules/taskFlow/megaicon.png",
+      "description": "modules/taskFlow/describe.md"
     }
   ]
 }
