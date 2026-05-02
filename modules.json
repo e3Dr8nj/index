@@ -1,0 +1,22 @@
+{
+  "modules": [
+    {
+      "name": "ImagineBookReader",
+      "url": "modules/ImagineBookReader/index.html",
+      "icon": "modules/ImagineBookReader/megaicon.png",
+      "description": "modules/ImagineBookReader/describe.md"
+    },
+    {
+      "name": "SentenceCraft",
+      "url": "modules/SentenceCraft/index.html",
+      "icon": "modules/SentenceCraft/megaicon.png",
+      "description": "modules/SentenceCraft/describe.md"
+    },
+    {
+      "name": "test",
+      "url": "modules/test/index.html",
+      "icon": null,
+      "description": null
+    }
+  ]
+}

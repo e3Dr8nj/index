@@ -11,67 +11,42 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="TaskFlow">
     <meta name="description" content="Планировщик дел с таймером и метрономом">
+    <link rel="icon" href="image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%236366f1'/><path d='M18 32L28 42L46 22' stroke='%23fff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/></svg>">
+    <link rel="apple-touch-icon" href="image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%236366f1'/><path d='M18 32L28 42L46 22' stroke='%23fff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/></svg>">
 
     <script>
-        // ===== PWA ICON GENERATION =====
+        // ===== PWA SETUP (Blob Manifest + Service Worker) =====
         (function(){
-            var svgIcon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><defs><linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#a78bfa"/></linearGradient></defs><rect width="512" height="512" rx="115" fill="url(#g)"/><path d="M140 256L220 336L372 176" stroke="#fff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-            var svgBlob = new Blob([svgIcon], {type:'image/svg+xml;charset=utf-8'});
-            var iconUrl = URL.createObjectURL(svgBlob);
-
-            // Favicon
-            var link = document.createElement('link');
-            link.rel = 'icon';
-            link.href = iconUrl;
-            document.head.appendChild(link);
-
-            // Apple Touch Icon
-            var apple = document.createElement('link');
-            apple.rel = 'apple-touch-icon';
-            apple.href = iconUrl;
-            document.head.appendChild(apple);
-
-            // Web Manifest
             var manifest = {
-                "name": "TaskFlow — Планировщик дел",
+                "name": "TaskFlow",
                 "short_name": "TaskFlow",
                 "description": "Планировщик дел с таймером и метрономом",
-                "start_url": "./",
+                "start_url": ".",
                 "display": "standalone",
                 "background_color": "#0a0a1a",
                 "theme_color": "#0a0a1a",
                 "orientation": "any",
-                "scope": "./",
-                "lang": "ru",
-                "categories": ["productivity"],
-                "icons": [
-                    {
-                        "src": iconUrl,
-                        "sizes": "192x192 512x512",
-                        "type": "image/svg+xml",
-                        "purpose": "any maskable"
-                    }
-                ]
+                "icons": [{
+                    "src": "image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%236366f1'/><path d='M18 32L28 42L46 22' stroke='%23fff' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/></svg>",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml",
+                    "purpose": "any maskable"
+                }]
             };
-            var mBlob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
-            var mLink = document.createElement('link');
-            mLink.rel = 'manifest';
-            mLink.href = URL.createObjectURL(mBlob);
-            document.head.appendChild(mLink);
+            try {
+                var blob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
+                var link = document.createElement('link');
+                link.rel = 'manifest';
+                link.href = URL.createObjectURL(blob);
+                document.head.appendChild(link);
+            } catch(e){}
 
-            // Service Worker
             if('serviceWorker' in navigator){
-                var swCode = [
-                    "var CACHE='taskflow-v2',URLS=['./'];",
-                    "self.addEventListener('install',function(e){e.waitUntil(caches.open(CACHE).then(function(c){return c.addAll(URLS)})).then(function(){return self.skipWaiting()})});",
-                    "self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(ks){return Promise.all(ks.filter(function(k){return k!==CACHE}).map(function(k){return caches.delete(k)}))}).then(function(){return self.clients.claim()})});",
-                    "self.addEventListener('fetch',function(e){if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(function(r){return r||fetch(e.request).then(function(resp){var copy=resp.clone();caches.open(CACHE).then(function(c){c.put(e.request,copy)});return resp}).catch(function(){return caches.match('./')})}))});",
-                    "self.addEventListener('push',function(e){if(!e.data)return;var d=e.data.json();self.registration.showNotification(d.title||'TaskFlow',{body:d.body||'',icon:d.icon||'',badge:d.badge||''})});"
-                ].join('');
-                var swBlob = new Blob([swCode], {type:'application/javascript'});
-                navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(function(err){
-                    console.log('SW registration via blob failed:', err);
-                });
+                var sw = "var C='tf-v1',F=['./'];self.addEventListener('install',function(e){e.waitUntil(caches.open(C).then(function(c){return c.addAll(F)})).then(function(){return self.skipWaiting()})});self.addEventListener('activate',function(e){e.waitUntil(caches.keys().then(function(k){return Promise.all(k.filter(function(x){return x!==C}).map(function(x){return caches.delete(x)}))}).then(function(){return self.clients.claim()})});self.addEventListener('fetch',function(e){if(e.request.method!=='GET')return;e.respondWith(caches.match(e.request).then(function(r){return r||fetch(e.request).then(function(resp){if(!resp||resp.status!==200)return resp;var c=resp.clone();caches.open(C).then(function(cache){cache.put(e.request,c)});return resp}).catch(function(){return caches.match('./')})}))});";
+                try {
+                    var sBlob = new Blob([sw], {type:'application/javascript'});
+                    navigator.serviceWorker.register(URL.createObjectURL(sBlob)).catch(function(){});
+                } catch(e){}
             }
         })();
     </script>
@@ -172,22 +147,9 @@
 
         .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:rgba(16,185,129,.9);color:#fff;padding:12px 20px;border-radius:12px;font-size:.875rem;z-index:100;animation:fadeIn .3s;max-width:90%;text-align:center}
         .toast.err{background:rgba(239,68,68,.9)}
-        .toast.info{background:rgba(99,102,241,.9)}
-
-        @keyframes confettiFall{0%{transform:translateY(-10px) rotate(0);opacity:1}100%{transform:translateY(100vh) translateX(var(--x)) rotate(720deg);opacity:0}}
-        .confetti-piece{position:fixed;top:-10px;width:8px;height:8px;border-radius:2px;pointer-events:none;z-index:9999;animation:confettiFall 2s ease-out forwards}
-
-        .pwa-badge{position:fixed;top:12px;right:12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);border-radius:8px;padding:4px 10px;font-size:0.65rem;font-weight:600;color:#10b981;z-index:60;display:flex;align-items:center;gap:4px;animation:fadeIn .3s}
-        .pwa-badge svg{width:12px;height:12px}
     </style>
 </head>
 <body class="flex flex-col items-center min-h-screen pb-24">
-
-<!-- PWA Install Status Badge -->
-<div id="pwaBadge" class="pwa-badge hidden">
-    <svg viewBox="0 0 16 16" fill="none"><path d="M8 1C4.13 1 1 4.13 1 8s3.13 7 7 7 7-3.13 7-7S11.87 1 8 1z" stroke="currentColor" stroke-width="1.2"/><path d="M5 8L7 10L11 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <span>Установлено</span>
-</div>
 
 <header class="w-full max-w-3xl mb-6 text-center px-4 pt-4">
     <div class="flex items-center justify-center gap-3 mb-2">
@@ -319,62 +281,36 @@
 <div id="toastBox" class="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 px-4 w-full max-w-xs"></div>
 
 <div id="installBanner" class="install-banner hidden flex items-center justify-between gap-3">
-    <span class="text-sm" style="color:var(--text)">Установить TaskFlow на устройство</span>
+    <span class="text-sm" style="color:var(--text)">Установить TaskFlow</span>
     <div class="flex gap-2"><button onclick="dismissInstall()" style="background:transparent;color:var(--text);border:1px solid var(--glass-border)">Позже</button><button id="installBtn" onclick="installApp()">Установить</button></div>
 </div>
 
 <script>
 // ===== PWA INSTALL =====
 var deferredPrompt = null;
-var isInstalled = false;
-
 window.addEventListener('beforeinstallprompt', function(e) {
     e.preventDefault();
     deferredPrompt = e;
     document.getElementById('installBanner').classList.add('show');
 });
-
 window.addEventListener('appinstalled', function() {
-    isInstalled = true;
     showToast('Приложение установлено! 🎉','ok');
     document.getElementById('installBanner').classList.remove('show');
-    document.getElementById('pwaBadge').classList.remove('hidden');
     deferredPrompt = null;
 });
-
-function checkInstalled() {
-    if (window.matchMedia('(display-mode: standalone)').matches || 
-        window.matchMedia('(display-mode: fullscreen)').matches || 
-        window.matchMedia('(display-mode: minimal-ui)').matches) {
-        isInstalled = true;
-        document.getElementById('pwaBadge').classList.remove('hidden');
-    }
-    if (navigator.standalone === true) {
-        isInstalled = true;
-        document.getElementById('pwaBadge').classList.remove('hidden');
-    }
-}
-
 function installApp() {
-    if (deferredPrompt) {
+    if(deferredPrompt) {
         deferredPrompt.prompt();
         deferredPrompt.userChoice.then(function(result) {
-            if (result.outcome === 'accepted') {
-                showToast('Установлено! 🎉','ok');
-            } else {
-                showToast('Установка отменена','info');
-            }
+            if(result.outcome === 'accepted') showToast('Установлено!','ok');
             deferredPrompt = null;
             document.getElementById('installBanner').classList.remove('show');
         });
-    } else if (!isInstalled) {
-        showToast('Откройте меню браузера → "Установить приложение" или "Добавить на главный экран"','info');
+    } else {
+        showToast('Используйте "Добавить на главный экран" в браузере','info');
     }
 }
-
-function dismissInstall() {
-    document.getElementById('installBanner').classList.remove('show');
-}
+function dismissInstall(){document.getElementById('installBanner').classList.remove('show')}
 
 // ===== THEME =====
 var currentTheme='cyberpunk';
@@ -384,7 +320,7 @@ function updateThemeIcon(theme){var icon=document.getElementById('themeIcon');if
 
 // ===== LOCALSTORAGE =====
 var store = {
-    data:{tasks:[],completed:{},theme:'cyberpunk'},
+    {tasks:[],completed:{},theme:'cyberpunk'},
     lsOk: false,
     init(){
         try { localStorage.setItem('__tf_test', '1'); localStorage.removeItem('__tf_test'); this.lsOk = true; } catch(e) {}
@@ -417,7 +353,7 @@ function p2(n){return String(n).padStart(2,'0')}
 function genId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
 function durLabel(ms){if(!ms||ms<=0)return'';var mn=Math.round(ms/60000);if(mn<60)return mn+' мин';var h=Math.floor(mn/60),m=mn%60;return m>0?h+' ч '+m+' мин':h+' ч'}
 function fmtTime(ms){if(ms<0)ms=0;var ts=Math.ceil(ms/1000),h=Math.floor(ts/3600),m=Math.floor((ts%3600)/60),s=ts%60;return p2(h)+':'+p2(m)+':'+p2(s)}
-function toast(msg,type){if(!type)type='ok';var box=document.getElementById('toastBox'),t=document.createElement('div');t.className='toast mb-2';if(type==='err')t.classList.add('err');if(type==='info')t.classList.add('info');t.textContent=msg;box.prepend(t);setTimeout(function(){t.remove()},3000)}
+function toast(msg,type){if(!type)type='ok';var box=document.getElementById('toastBox'),t=document.createElement('div'),bg=type==='ok'?'bg-emerald-500/90':type==='err'?'bg-red-500/90':'bg-indigo-500/90';t.className=bg+' text-white px-5 py-3 rounded-xl text-sm font-medium shadow-xl mb-2';t.textContent=msg;box.prepend(t);setTimeout(function(){t.remove()},3000)}
 function esc(s){if(!s)return'';var d=document.createElement('div');d.textContent=s;return d.innerHTML}
 
 // ===== EXPORT/IMPORT =====
@@ -462,8 +398,8 @@ function importData(file){
 // ===== CATEGORIES =====
 var CAT={general:{icon:'📌',label:'Общее',color:'#94a3b8',clrL:'rgba(148,163,184,0.15)',clrB:'rgba(148,163,184,0.1)'},work:{icon:'💼',label:'Работа',color:'#00ffff',clrL:'rgba(0,255,255,0.12)',clrB:'rgba(0,255,255,0.08)'},personal:{icon:'👤',label:'Личное',color:'#ff00ff',clrL:'rgba(255,0,255,0.12)',clrB:'rgba(255,0,255,0.08)'},health:{icon:'🏃',label:'Здоровье',color:'#00ff88',clrL:'rgba(0,255,136,0.12)',clrB:'rgba(0,255,136,0.08)'},study:{icon:'📚',label:'Учёба',color:'#ffff00',clrL:'rgba(255,255,0,0.12)',clrB:'rgba(255,255,0,0.08)'},shopping:{icon:'🛒',label:'Покупки',color:'#ff4466',clrL:'rgba(255,68,102,0.12)',clrB:'rgba(255,68,102,0.08)'}};
 var DAY_N=['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
-var editId=null, recFilter='all';
-var bRec={type:'none',days:[],interval:7};
+var allTasks=[], completed={}, editId=null, recFilter='all';
+var bRec={type:'none',days:[],interval:7}, eRec={type:'none',days:[],interval:7};
 var selectedCat='all', linkedTaskId=null;
 
 // ===== METRONOME =====
@@ -520,7 +456,7 @@ function setRecType(type){bRec.type=type;document.querySelectorAll('#panel-build
 function toggleDay(day){var btn=document.getElementById('wd-'+day),idx=bRec.days.indexOf(day);if(idx!==-1){bRec.days.splice(idx,1);btn.classList.remove('active')}else{bRec.days.push(day);btn.classList.add('active')}}
 function resetBuilderForm(){document.getElementById('bTitle').value='';document.getElementById('bDesc').value='';document.getElementById('bCat').value='general';document.getElementById('bDurationMin').value='';document.getElementById('bMetroPeriod').value='';document.getElementById('durPreview').textContent='';bRec={type:'none',days:[],interval:7};document.querySelectorAll('#panel-builder .rec-btn').forEach(function(b){b.classList.remove('active')});document.getElementById('rt-none').classList.add('active');document.getElementById('recWeeklyPanel').classList.add('hidden');document.getElementById('recIntervalPanel').classList.add('hidden');document.querySelectorAll('#weekDaysGrid .day-btn').forEach(function(b){b.classList.remove('active')});document.getElementById('recIntervalVal').value=7}
 function buildTask(){var inp=document.getElementById('bTitle'),title=inp.value.trim();if(!title){inp.style.borderColor='#ef4444';setTimeout(function(){inp.style.borderColor=''},1000);return}if(bRec.type==='weekly'&&!bRec.days.length){toast('Выберите дни','err');return}var dm=parseInt(document.getElementById('bDurationMin').value)||0,mp=parseInt(document.getElementById('bMetroPeriod').value)||0,ck=document.getElementById('bCat').value;var task={id:genId(),title:title,description:document.getElementById('bDesc').value.trim(),category:ck,createdAt:new Date().toISOString(),durationMs:dm>0?dm*60000:0,metroPeriod:mp>0?mp:0,recurrence:bRec.type==='none'?{type:'none'}:{type:bRec.type,days:[...bRec.days],interval:bRec.interval||7}};store.data.tasks.unshift(task);store.save();showBuilder(title,ck);showAdded(title,ck);resetBuilderForm();renderToday()}
-function celebrate(){var colors=['#00ffff','#ff00ff','#ffff00','#00ff88','#fbbf24','#ff4466'];for(var i=0;i<50;i++){(function(idx){setTimeout(function(){var c=document.createElement('div');c.className='confetti-piece';c.style.left=Math.random()*100+'vw';c.style.setProperty('--x',(Math.random()-.5)*150+'px');c.style.width=(5+Math.random()*5)+'px';c.style.height=(5+Math.random()*5)+'px';c.style.background=colors[Math.floor(Math.random()*colors.length)];document.body.appendChild(c);setTimeout(function(){if(c.parentNode)c.remove()},2500)},idx*20)})(i)}}
+function celebrate(){var colors=['#00ffff','#ff00ff','#ffff00','#00ff88','#fbbf24','#ff4466'];for(var i=0;i<50;i++){(function(idx){setTimeout(function(){var c=document.createElement('div');c.className='confetti-piece';c.style.left=Math.random()*100+'vw';c.style.top='-10px';c.style.width=(5+Math.random()*5)+'px';c.style.height=(5+Math.random()*5)+'px';c.style.background=colors[Math.floor(Math.random()*colors.length)];document.body.appendChild(c);var dur=1000+Math.random()*1000,x=(Math.random()-.5)*100;c.animate([{transform:'translateY(0) rotate(0)',opacity:1},{transform:'translateY(100vh) translateX('+x+'px) rotate(720deg)',opacity:0}],{duration:dur}).onfinish=function(){c.remove()}},idx*20)})(i)}}
 
 var audioCtx=null;function getACtx(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();return audioCtx}
 function playSuccess(){try{var c=getACtx(),n=c.currentTime;[523.25,659.25,783.99,1046.50].forEach(function(f,i){var o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.setValueAtTime(f,n+i*.1);g.gain.setValueAtTime(0,n+i*.1);g.gain.linearRampToValueAtTime(.3,n+i*.1+.05);g.gain.exponentialRampToValueAtTime(.001,n+i*.1+.3);o.connect(g);g.connect(c.destination);o.start(n+i*.1);o.stop(n+i*.1+.3)})}catch(e){}}
@@ -552,7 +488,7 @@ window.addEventListener('beforeunload',function(){store.save();saveTimer()});
 function timerRemaining0Logic(){timerSt.remainingMs=0;timerSt.state='done';timerSt.targetTime=null;clearInterval(timerInt);timerInt=null;saveTimer();updTimerDisp();addHist(timerSt.totalMs);playAlarm();toast('⏰ Завершён!');stopMetro();if(linkedTaskId){store.data.completed[linkedTaskId]=todayStr();store.save();renderToday()}}
 
 // ===== INIT =====
-function init(){loadTimer();showDate();renderToday();updateDurPreview();updTimerDisp();renderHist();updTaskBadge();checkInstalled()}
+function init(){loadTimer();showDate();renderToday();updateDurPreview();updTimerDisp();renderHist();updTaskBadge()}
 init();
 </script>
 </body>
