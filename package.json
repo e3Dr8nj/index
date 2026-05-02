@@ -1,5 +1,9 @@
 {
   "scripts": {
-    "build": "node generate-manifest.js"
+    "build": "node generate-manifest.js",
+     "deploy:taskflow": "npx gh-pages -d public/modules/test -b gh-pages --add --dest modules/taskflow"
+ 
   }
 }
+
+   
