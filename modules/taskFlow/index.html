@@ -77,6 +77,7 @@
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="install.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/fontsource-inter@5.0.0/index.min.css" rel="stylesheet">
 
     <style>
@@ -188,6 +189,18 @@
     <svg viewBox="0 0 16 16" fill="none"><path d="M8 1C4.13 1 1 4.13 1 8s3.13 7 7 7 7-3.13 7-7S11.87 1 8 1z" stroke="currentColor" stroke-width="1.2"/><path d="M5 8L7 10L11 6" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <span>Установлено</span>
 </div>
+
+<!-- Кнопка установки (в шапке или в плавающем блоке) -->
+<button id="installBtn" class="btn-install" aria-label="Установить приложение">
+  <!-- Иконка загрузки -->
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+    <polyline points="17 8 12 3 7 8"></polyline>
+    <line x1="12" y1="3" x2="12" y2="15"></line>
+  </svg>
+  <span>Установить</span>
+</button>
+<!----->
 
 <header class="w-full max-w-3xl mb-6 text-center px-4 pt-4">
     <div class="flex items-center justify-center gap-3 mb-2">
@@ -554,6 +567,20 @@ function timerRemaining0Logic(){timerSt.remainingMs=0;timerSt.state='done';timer
 // ===== INIT =====
 function init(){loadTimer();showDate();renderToday();updateDurPreview();updTimerDisp();renderHist();updTaskBadge();checkInstalled()}
 init();
+</script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    new PWAInstaller({
+      buttonId: 'installBtn', // Если кнопка уже есть в HTML, или null для авто-создания
+      delay: 2000,            // Показать через 2 секунды (опционально)
+      onInstallReady: () => console.log('✅ PWA готова к установке'),
+      onInstalled: () => {
+        console.log('🎉 Приложение установлено!');
+        // Можно отправить аналитику: gtag('event', 'pwa_installed');
+      },
+      onDismissed: () => console.log('❌ Установка отменена')
+    });
+  });
 </script>
 </body>
 </html>
