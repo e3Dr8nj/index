@@ -3,6 +3,7 @@
   "short_name": "SentenceCraf",
   "description": "Модуль SentenceCraft",
   "start_url": "./index.html",
+  "scope": "/modules/SentenceCraft/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#0d1117",

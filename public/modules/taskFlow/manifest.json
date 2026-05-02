@@ -3,6 +3,7 @@
   "short_name": "taskFlow",
   "description": "Модуль taskFlow",
   "start_url": "./index.html",
+  "scope": "/modules/taskFlow/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#0d1117",

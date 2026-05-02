@@ -3,6 +3,7 @@
   "short_name": "ImagineBookR",
   "description": "Модуль ImagineBookReader",
   "start_url": "./index.html",
+  "scope": "/modules/ImagineBookReader/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#0d1117",
