@@ -1,0 +1,10 @@
+{
+  "name": "Taskflow",
+  "short_name": "Task",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "theme_color": "#0d1117",
+  "background_color": "#0d1117",
+  "orientation": "portrait-primary",
+  "lang": "ru"
+}
