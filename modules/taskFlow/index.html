@@ -559,20 +559,7 @@ function timerRemaining0Logic(){timerSt.remainingMs=0;timerSt.state='done';timer
 function init(){loadTimer();showDate();renderToday();updateDurPreview();updTimerDisp();renderHist();updTaskBadge();checkInstalled()}
 init();
 </script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    new PWAInstaller({
-      buttonId: 'installBtn', // Если кнопка уже есть в HTML, или null для авто-создания
-      delay: 2000,            // Показать через 2 секунды (опционально)
-      onInstallReady: () => console.log('✅ PWA готова к установке'),
-      onInstalled: () => {
-        console.log('🎉 Приложение установлено!');
-        // Можно отправить аналитику: gtag('event', 'pwa_installed');
-      },
-      onDismissed: () => console.log('❌ Установка отменена')
-    });
-  });
-</script>
+
 </body>
 </html>
 
