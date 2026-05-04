@@ -1,10 +1,10 @@
 {
   "scripts": {
     "build": "node generate-manifest.js",
-    "deploy":"npx gh-pages -d . -b gh-pages",
-     "deploy:taskflow": "npx gh-pages -d ./modules/taskFlow -b gh-pages --add --dest modules/taskflow"
- 
+    "deploy": "gh-pages -d public",
+    "deploy:taskflow": "npx gh-pages -d ./modules/taskFlow -b gh-pages --add --dest modules/taskflow"
+  },
+  "devDependencies": {
+    "gh-pages": "^6.3.0"
   }
 }
-
-   
