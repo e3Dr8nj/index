@@ -1,1 +1,1 @@
-#Планировщик дел.[download](https://e3dr8nj.github.io/index/modules/taskFlow/)
+#Планировщик дел.[открыть напрямую](https://e3dr8nj.github.io/index/modules/taskFlow/)
